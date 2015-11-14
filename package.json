@@ -1,0 +1,14 @@
+{
+  "name": "Tx-Testing",
+  "version": "0.0.1",
+  "description": "test TPS for Digibyte network",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "async": "^1.5.0",
+    "bitcoin": "^3.0.1",
+    "request": "^2.65.0"
+  }
+}

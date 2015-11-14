@@ -1,0 +1,36 @@
+# from https://github.com/github/gitignore/blob/master/Node.gitignore
+lib-cov
+*.seed
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+*.swp
+tags
+pids
+logs
+results
+build
+
+node_modules
+
+# extras
+*.swp
+*.swo
+*~
+.project
+peerdb.json
+
+npm-debug.log
+.nodemonignore
+
+.DS_Store
+public/lib/*
+
+public/js/angularjs-all.js
+public/js/main.js
+public/js/vendors.js
+
+public/css/main.css
