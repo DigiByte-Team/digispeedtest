@@ -27,7 +27,6 @@ function sendToAddress(address, amount, cb){
 }
 
 function sendMany(address, amount, cb){
-	console.log(address, amount)
 	var start = +new Date();
 	var count = 0;
 	var arr = [];
