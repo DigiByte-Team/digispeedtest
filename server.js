@@ -2,12 +2,14 @@ var request = require('request');
 var bitcoin = require('bitcoin');
 var async = require('async');
 var cluster = require('cluster');
+var fs = require('fs');
+var settings = require('./settings');
 
 var client = new bitcoin.Client({
   host: '127.0.0.1',
   port: 14022,
-  user: 'user',
-  pass: 'password',
+  user: settings.rpcUsername,
+  pass: settings.rpcPassword,
   timeout: 30000
 });
 
@@ -24,18 +26,16 @@ function sendToAddress(address, amount, cb){
 	})
 }
 
-function sendMany(address, amount, txsToSend, cb){
+function sendMany(address, amount, cb){
+	console.log(address, amount)
 	var start = +new Date();
 	var count = 0;
 	var arr = [];
 	var keepRuning = false
 	async.whilst(
-		//function () { return count <= txsToSend; },
-	    function () { return keepRuning === false },
+		function () { return keepRuning === false },
 	    function (callback) {
 			sendToAddress(address, amount, function(data){
-				arr.push([data]);
-				//count++
 				callback();
 			});	    	
 	    },
@@ -47,14 +47,39 @@ function sendMany(address, amount, txsToSend, cb){
 
 }
 
-var numCPUs = 4;
-
 if (cluster.isMaster) {
-    for (var i = 0; i < numCPUs; i++) {
-        cluster.fork();
-    }
+  	fs.writeFile('./cluster.pid', process.pid, function (err) {
+    	if (err) {
+      		console.log('Error: unable to create cluster.pid');
+      		process.exit(1);
+    	} else {
+      		console.log('Starting cluster with pid: ' + process.pid);    
+      		//ensure workers exit cleanly 
+     		process.on('SIGINT', function() {
+        		console.log('Cluster shutting down..');
+        		for (var id in cluster.workers) {
+          			cluster.workers[id].kill();
+        		}
+        		// exit the master process
+        		process.exit(0);
+      		});
+
+     		// Count the machine's CPUs
+      		var cpuCount = require('os').cpus().length;
+
+      		// Create a worker for each CPU
+      		for (var i = 0; i < cpuCount; i += 1) {
+        		cluster.fork();
+      		}
+
+		    // Listen for dying workers
+      		cluster.on('exit', function () {
+        		cluster.fork();
+      		});
+    	}
+  	});
 } else {
-	sendMany('3CJJ8Z6QHvDdmDXbPcUjpxc88ZotnFR8Cs', 0.001, 5, function(data){
+	sendMany(settings.sendToAddress, settings.sendAmount, function(data){
 		console.log(data);
 	});
 }
