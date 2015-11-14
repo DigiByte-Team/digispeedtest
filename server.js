@@ -1,6 +1,7 @@
 var request = require('request');
 var bitcoin = require('bitcoin');
 var async = require('async');
+var cluster = require('cluster');
 
 var client = new bitcoin.Client({
   host: '127.0.0.1',
@@ -27,12 +28,14 @@ function sendMany(address, amount, txsToSend, cb){
 	var start = +new Date();
 	var count = 0;
 	var arr = [];
+	var keepRuning = false
 	async.whilst(
-	    function () { return count <= txsToSend; },
+		//function () { return count <= txsToSend; },
+	    function () { return keepRuning === false },
 	    function (callback) {
 			sendToAddress(address, amount, function(data){
 				arr.push([data]);
-				count++
+				//count++
 				callback();
 			});	    	
 	    },
@@ -44,6 +47,14 @@ function sendMany(address, amount, txsToSend, cb){
 
 }
 
-sendMany('3CJJ8Z6QHvDdmDXbPcUjpxc88ZotnFR8Cs', 0.001, 5, function(data){
-	console.log(data);
-})
+var numCPUs = 4;
+
+if (cluster.isMaster) {
+    for (var i = 0; i < numCPUs; i++) {
+        cluster.fork();
+    }
+} else {
+	sendMany('3CJJ8Z6QHvDdmDXbPcUjpxc88ZotnFR8Cs', 0.001, 5, function(data){
+		console.log(data);
+	});
+}
